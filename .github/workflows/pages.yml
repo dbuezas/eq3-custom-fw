@@ -1,0 +1,84 @@
+# Build the web app and publish it to GitHub Pages.
+#
+# The page lives at https://dbuezas.github.io/eq3-custom-fw/ -- a PROJECT page, so everything sits
+# one directory down. That path is NOT set here: `webapp/vite.config.ts` owns it as `PAGES_BASE`,
+# and three other things are derived from it (the router, the PWA manifest, the 404 copy). A second
+# copy in this file is a second thing to forget.
+#
+# Enable it once, by hand, in Settings -> Pages -> Source: "GitHub Actions".
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  # So a broken build is caught on the PR rather than on the live page.
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: read the code, write a Pages deployment, and nothing else.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time, and never cancel one in flight -- a half-published page is worse than an
+# old one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webapp
+    steps:
+      # THE MAJOR VERSIONS HERE ARE THE NODE RUNTIME, not this workflow's shape. GitHub retired
+      # Node 20 on its runners, so every action still built against it is force-run on Node 24 and
+      # annotates the run saying so. These five are the current majors; none of them changed an input
+      # this file passes.
+      - uses: actions/checkout@v7
+
+      # Bun, because that is what builds and tests this app locally -- `bun.lock` is the lockfile in
+      # the repo, and installing with anything else would resolve a different tree than the one that
+      # was tested.
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # The tests gate the deploy: 239 of them in about five seconds, so there is no reason to
+      # publish a build that has not passed them.
+      #
+      # **`bun run test`, NEVER a bare `bun test`** -- and this is the one line here that has already
+      # been wrong. `src/device/bthome.test.mjs` is its own runner and ends in `process.exit`, which
+      # its own header warns about: let bun's test runner collect it and that exit ends the whole
+      # run, after 4 tests, with status 0. CI was therefore green having skipped 235 of the 239, and
+      # nothing said so -- the output even looks like a passing test run. The package.json script
+      # runs that file with node first and then hands bun an explicit pattern that excludes it.
+      - name: Test
+        run: bun run test
+
+      - name: Build
+        run: bun run build
+
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: webapp/dist
+
+  deploy:
+    # A pull request builds and tests, but must not publish.
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

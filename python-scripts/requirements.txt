@@ -1,0 +1,9 @@
+# pip install -r requirements.txt
+#
+# Two, and only the first is needed to update a thermostat:
+#
+#   bleak     flash.py -- everything over Bluetooth
+#   pyserial  ble_chip_via_uart.py only, which talks to a USB-UART adapter rather than the air
+
+bleak>=0.22
+pyserial>=3.5

@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * The palette is the thermostat's own: a warm amber against a cold slate ground, which is what the
+ * device's LCD backlight looks like against its grey case. Not a neutral picked by default.
+ */
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(0.98 0.005 240);
+  --foreground: oklch(0.2 0.02 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.02 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.02 250);
+  --primary: oklch(0.68 0.16 62);
+  --primary-foreground: oklch(0.16 0.02 250);
+  --secondary: oklch(0.95 0.01 245);
+  --secondary-foreground: oklch(0.28 0.02 250);
+  --muted: oklch(0.95 0.01 245);
+  --muted-foreground: oklch(0.52 0.02 250);
+  --accent: oklch(0.93 0.03 62);
+  --accent-foreground: oklch(0.24 0.03 60);
+  --destructive: oklch(0.58 0.21 26);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.9 0.01 245);
+  --input: oklch(0.9 0.01 245);
+  --ring: oklch(0.68 0.16 62);
+
+  /* Semantic, and deliberately separate from --primary: a warning must not be the accent hue. */
+  --ok: oklch(0.65 0.15 150);
+  --warn: oklch(0.75 0.15 85);
+}
+
+.dark {
+  --background: oklch(0.17 0.015 250);
+  --foreground: oklch(0.95 0.008 245);
+  --card: oklch(0.21 0.018 250);
+  --card-foreground: oklch(0.95 0.008 245);
+  --popover: oklch(0.21 0.018 250);
+  --popover-foreground: oklch(0.95 0.008 245);
+  --primary: oklch(0.76 0.15 65);
+  --primary-foreground: oklch(0.18 0.02 250);
+  --secondary: oklch(0.26 0.02 250);
+  --secondary-foreground: oklch(0.95 0.008 245);
+  --muted: oklch(0.26 0.02 250);
+  --muted-foreground: oklch(0.68 0.015 245);
+  --accent: oklch(0.3 0.04 62);
+  --accent-foreground: oklch(0.94 0.03 70);
+  --destructive: oklch(0.64 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.3 0.02 250);
+  --input: oklch(0.32 0.02 250);
+  --ring: oklch(0.76 0.15 65);
+
+  --ok: oklch(0.72 0.15 152);
+  --warn: oklch(0.8 0.15 85);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    /* One-handed at a radiator: nothing may sit under the notch or the home indicator. */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    /* A control-heavy page must not rubber-band while you are aiming at a button. */
+    overscroll-behavior-y: none;
+  }
+  /* No double-tap-to-zoom delay on anything you can press. It is safe to apply this widely because
+     it changes no layout — unlike a tap-target height, which must not be applied this way: every
+     Radix control is a <button> underneath, so a blanket `button { min-height }` stretched the
+     switches to 44 px tall against their own 18 px, and did the same to the checkboxes and the
+     dialog's close button. The 44 px belongs to the Button component's own size variants, where it
+     reaches the things that are actually buttons and nothing else. */
+  button,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+  /* TAILWIND v4 DROPPED THE POINTER CURSOR ON BUTTONS, deliberately — Preflight v3 set
+     `cursor: pointer` and v4 defers to the browser default, which is `cursor: default`. It is not a
+     shadcn bug and not something the Button component should paper over: it reaches every <button>
+     on the page, the Radix controls included, so restoring it belongs here rather than in one
+     component's class list. This is Tailwind's own documented answer to the change.
+
+     `:not(:disabled)` because a disabled control must not claim to be pressable. `[role='button']`
+     for the handful of things that are buttons without being <button>. */
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/**
+ * THE THERMOSTAT'S GLASS. The artwork is the `PanelArt` component; these
+ * are the only rules it needs, and they are deliberately NOT theme tokens — an LCD looks like an
+ * LCD in a dark room too, and a panel that changed colour with the app would stop reading as a
+ * picture of the device.
+ *
+ * UNLIT SEGMENTS STAY AS A FAINT GHOST, which is what the real glass looks like off-axis and what
+ * keeps the panel legible while a single lit segment moves across it.
+ */
+.lcd-host svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+}
+.lcd-host .glass {
+  fill: #a8b89a;
+}
+.lcd-host .seg {
+  fill: #12160f;
+  stroke: #12160f;
+  opacity: 0.07;
+  transition: opacity 0.06s linear;
+}
+.lcd-host .seg.lbl {
+  stroke: none;
+  font-family: ui-sans-serif, Helvetica, Arial, sans-serif;
+  font-weight: 700;
+}
+.lcd-host .seg.on {
+  opacity: 1;
+}

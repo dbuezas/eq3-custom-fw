@@ -1,0 +1,183 @@
+import { copyFileSync, existsSync, readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
+
+import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+import { VitePWA } from 'vite-plugin-pwa'
+
+const here = dirname(fileURLToPath(import.meta.url))
+
+/**
+ * WHERE THE BUILT PAGE IS SERVED FROM — `dbuezas.github.io/eq3-custom-fw/`, a GitHub PROJECT page,
+ * so everything sits one directory down rather than at a host root `[owner]`.
+ *
+ * It must be set, and the failure is total and silent: with the default `/`, every asset in the
+ * built `index.html` is requested from the host root, where a project page has nothing, so the page
+ * loads and renders blank with only 404s in the console.
+ *
+ * **It is applied to the BUILD only, never to the dev server.** `vite dev` is reached at a bare
+ * host and port on the LAN and through the tailnet name below, and a base would move it to
+ * `/eq3-custom-fw/` there too — breaking every bookmark and the phone's home-screen app for a
+ * setting that only the deployment needs.
+ *
+ * Three other places follow this one, and all three are broken by disagreeing with it:
+ *   - `state/route.ts` reads it back as `BASE_URL`; every address in the app is absolute.
+ *   - the PWA manifest's `start_url`/`scope` below, or the installed app opens the host root.
+ *   - `public/404.html`, which is how a cold deep link reaches the app at all on Pages.
+ */
+const PAGES_BASE = '/eq3-custom-fw/'
+
+/**
+ * WEB BLUETOOTH ONLY EXISTS IN A SECURE CONTEXT, and the failure is silent: over plain
+ * `http://192.168.x.x` the page loads perfectly and `navigator.bluetooth` is simply ABSENT, so the
+ * connect button can never work and nothing says why. `http://localhost` counts as secure, which is
+ * why developing on this machine needs no certificate -- but a phone standing at the radiator does.
+ *
+ * Put a self-signed pair in `certs/` to serve the LAN over TLS:
+ *
+ *   mkdir -p certs && openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+ *     -keyout certs/key.pem -out certs/cert.pem -subj "/CN=eq3" \
+ *     -addext "subjectAltName=IP:<this machine's LAN ip>"
+ *
+ * The SAN matters: without it Chrome rejects the certificate outright rather than offering the
+ * "not private" interstitial you can click through.
+ */
+const certDir = process.env.VITE_CERT_DIR ?? resolve(here, 'certs')
+const key = resolve(certDir, 'key.pem')
+const cert = resolve(certDir, 'cert.pem')
+const https =
+  existsSync(key) && existsSync(cert)
+    ? { key: readFileSync(key), cert: readFileSync(cert) }
+    : undefined
+
+if (!https) {
+  console.log(
+    '\n  no certs/ -- serving HTTP, which is a secure context on localhost ONLY.\n' +
+      '  A phone on the LAN will load the page and find no navigator.bluetooth at all.\n' +
+      '  See the comment in vite.config.ts for the one-line openssl command.\n',
+  )
+}
+
+/**
+ * AN INSTALLED APP THAT WORKS WITH NO NETWORK, because of where this one is used.
+ *
+ * It is opened standing at a radiator, which may be in a cellar with no wifi at all. **Bluetooth
+ * works there; a page that cannot load does not** — so offline is not polish here, it is whether
+ * the app exists at the moment it is wanted. Installing to a home screen also drops the browser
+ * chrome, which is most of a phone's screen back.
+ *
+ * **`prompt`, NOT `autoUpdate`.** A service worker that swaps the app underneath somebody is a bad
+ * idea in general and a worse one here: this app holds a Bluetooth connection and a half-edited
+ * weekly programme. It asks instead, and `UpdatePrompt` is the asking. The classic service-worker
+ * failure is the opposite one — serving a stale app forever — which `registerSW`'s update check
+ * and that prompt exist to prevent.
+ */
+const pwa = VitePWA({
+  registerType: 'prompt',
+  includeAssets: ['apple-touch-icon.png'],
+  manifest: {
+    name: 'eQ-3 thermostat',
+    short_name: 'Thermostat',
+    description: 'Set up and drive eQ-3 radiator thermostats over Bluetooth.',
+    theme_color: '#0f1722',
+    background_color: '#0f1722',
+    display: 'standalone',
+    orientation: 'portrait',
+    // BOTH, and both are `PAGES_BASE`: `start_url` is what the installed app opens, and `scope` is
+    // what it treats as "inside" itself. A `start_url` of `/` opens the host root, which on a
+    // project page is somebody else's page; a missing `scope` lets the app consider the whole host
+    // its own. The PWA is disabled in dev (`devOptions` below), so these never affect `vite dev`.
+    start_url: PAGES_BASE,
+    scope: PAGES_BASE,
+    icons: [
+      { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+      { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+      // Android crops a maskable icon to the launcher's own shape, so this one keeps clear of its
+      // own edges. Both are generated by `tools/make_icons.py`.
+      { src: 'icon-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    ],
+  },
+  workbox: {
+    // The whole app is static files plus Bluetooth: there is no data to sync and nothing to fetch
+    // at runtime, so precaching the shell IS the offline story.
+    globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+    // DEEP LINKS ARE NOT FILES. `/thermostat/<mac>/status` has to reach the shell, and there are
+    // two answers because there are two ways it is asked for: once the service worker is installed
+    // it answers navigations itself, and `generateSW` already binds a NavigationRoute to
+    // `index.html` — verified in the built `sw.js` rather than assumed, because getting this wrong
+    // means the installed app can open no address but the root. The cold load, before the worker
+    // exists, is the SERVER's job: Vite's dev server rewrites unknown paths to `index.html` on its
+    // own, so a static host that ever replaces it needs the same rewrite configured.
+  },
+  // OFF IN DEV, AND THE CONSEQUENCE IS NOT OBVIOUS, so it is written down rather than rediscovered
+  // `[manually verified]`: the dev server registers no service worker at all, so an app installed to
+  // a phone's home screen FROM IT opens full-screen, has no stored copy of itself, and HANGS ON THE
+  // SPLASH with the network off. That reads exactly like a broken offline build and is not one --
+  // the production build's offline shell was then confirmed working in aeroplane mode, on the same
+  // phone, by serving `dist` at the same address `[owner]`.
+  // So: TEST OFFLINE AGAINST A BUILD, never against the dev server. Leaving it off is still right --
+  // a service worker in dev serves yesterday's bundle over today's edits, which costs more than it
+  // saves. The one thing to know afterwards is that the worker SURVIVES the switch back: an origin
+  // that has served the built app once keeps serving its stored copy to that phone until the site's
+  // data is cleared, which presents as a dev server whose changes do not appear.
+  devOptions: { enabled: false },
+})
+
+/**
+ * GITHUB PAGES HAS NO SPA REWRITE, so a COLD deep link is a 404 — and this app's addresses are deep
+ * links by design (`/thermostat/<id>/status`). What Pages does offer is that it serves `404.html`
+ * for any path it cannot find, so an identical copy of the shell there turns that 404 into the app,
+ * which then reads the address out of the bar as usual.
+ *
+ * **It must be the BUILT index, not a static file in `public/`.** The shell references hashed asset
+ * names that only exist after a build, so a hand-written copy goes stale at the first rebuild and
+ * fails exactly where it is needed: on a link somebody was sent.
+ *
+ * This is the COLD load only. Once the service worker is installed it answers navigations itself —
+ * `generateSW` binds a NavigationRoute to `index.html`, see the `workbox` note above.
+ */
+const pages404 = {
+  name: 'pages-404',
+  apply: 'build' as const,
+  // After the bundle is closed, so the file copied is the finished one, hashed asset names and all.
+  // Workbox globs LATER than this and picks it up, so the precache carries both copies of the shell
+  // `[manually verified]` — 1.8 KB, and they can never disagree because one is a copy of the other.
+  closeBundle() {
+    const built = resolve(here, 'dist/index.html')
+    if (existsSync(built)) copyFileSync(built, resolve(here, 'dist/404.html'))
+  },
+}
+
+export default defineConfig(({ command }) => ({
+  // `serve` is the dev server and keeps the root; `build` is what goes to Pages. See PAGES_BASE.
+  base: command === 'build' ? PAGES_BASE : '/',
+  plugins: [react(), tailwindcss(), pwa, pages404],
+  resolve: { alias: { '@': resolve(here, 'src') } },
+  server: {
+    // `host: true` so the phone at the radiator can reach it -- the whole point of the app.
+    host: true,
+    // 8770 IS THE OLD DEVAPP'S, and Vite's answer to a taken port is to move to the next one
+    // WITHOUT failing — which it did, landing on 8771 while the config still said 8770. Anything
+    // aimed at this server then points at whatever the config claims. `strictPort` turns a silent
+    // move into a refusal to start, which is the failure worth having.
+    port: 8771,
+    strictPort: true,
+    https,
+    /**
+     * TAILSCALE IN FRONT, which is how the phone gets a certificate it TRUSTS.
+     *
+     * A self-signed certificate is a bad daily deal and it is not only about the warning page:
+     * Chrome keeps the exception until the browser closes, so a restart loses it — and an installed
+     * home-screen app cannot show that page at all, so it simply fails to load. The Bluetooth grant
+     * goes at the same moment `[inferred]`, which reads as the app having forgotten the thermostat.
+     *
+     * `tailscale serve` puts a real Let's Encrypt certificate in front of this server on the
+     * tailnet's own name, so the phone sees an ordinary trusted site with no flags and no files to
+     * install. Vite refuses a Host header it was not told about, and the ts.net name is exactly
+     * that, so it is named here or the proxy answers 403 before the app is ever reached.
+     */
+    allowedHosts: ['.ts.net'],
+  },
+}))

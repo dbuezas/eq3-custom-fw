@@ -1,0 +1,23 @@
+node_modules
+dist
+# Vite's dependency pre-bundle. A running dev server rewrites it whenever it feels like it, so an
+# untracked-but-not-ignored copy gets swept into any `git add -A` that happens to run at the time.
+.vite
+dist-ssr
+*.local
+*.log
+
+# The repo root ignores `*.lock` — that rule is aimed at Ghidra's project locks, and it swallows
+# this one silently. KEEP THE LOCKFILE: it is what makes `bun install` reproduce the same tree for
+# somebody who did not write it, which is most of the argument for shipping a browser client at all.
+!bun.lock
+
+# Self-signed DEV certificates, made per-machine with the openssl line in vite.config.ts.
+# They carry this machine's LAN IP in their SAN, so a committed pair would be wrong for
+# everyone else and a committed private key is a bad habit whatever it protects.
+certs/
+
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea

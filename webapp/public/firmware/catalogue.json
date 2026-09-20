@@ -1,0 +1,128 @@
+{
+  "releases": [
+    {
+      "version": "2.00",
+      "mod": true,
+      "note": "This project's unofficial firmware. Everything 1.48 does, plus pair-less encrypted connections, BTHome broadcasts, a settable pairing PIN, unpair-all, the screen mirror, its buttons as a remote control, longer battery life, the extra settings this app exposes, and much more.",
+      "stm8": {
+        "file": "stm8-2.00.enc",
+        "bytes": 34816,
+        "sha256": "ddeab772c12101838ea64a8b58d635c45d128c32745292ef4e7d530e9c2edebc",
+        "expect": 200
+      },
+      "radio": {
+        "file": "radio-2.00.bin",
+        "bytes": 27312,
+        "sha256": "60d83b74f3223b3c8cc729251c09af8f35b66248f0e25001d1c99fa638f902d2",
+        "expect": "5.0"
+      }
+    },
+    {
+      "version": "1.05",
+      "mod": false,
+      "note": "The earliest firmware here. Little reason to choose it except to see what the thermostat originally shipped with.",
+      "stm8": {
+        "file": "stm8-1.05.enc",
+        "bytes": 33712,
+        "sha256": "26825ad8d4280cc756382a0b0392312c3d9834d0a5659fc4b5cfbde9f59bd227",
+        "expect": 105
+      },
+      "radio": {
+        "file": "radio-1.05.bin",
+        "bytes": 17118,
+        "sha256": "7977eb8e916fc3a7ea498b2006315942f64d31bb0b5a043bc866fcd36aea4799",
+        "expect": "1.2"
+      }
+    },
+    {
+      "version": "1.06",
+      "mod": false,
+      "note": "Very early firmware, one bug-fix release after the first. Little reason to choose it.",
+      "stm8": {
+        "file": "stm8-1.06.enc",
+        "bytes": 33236,
+        "sha256": "4bfc2f0e2f7c15d11f0f53daaa9e2604ae3aaba51998062237773b2748b83879",
+        "expect": 106
+      },
+      "radio": {
+        "file": "radio-1.06.bin",
+        "bytes": 17118,
+        "sha256": "51674caf8777e0f4d9649789e13813b86936e209ac0f8f14cf548ab9bf311fd1",
+        "expect": "1.2"
+      }
+    },
+    {
+      "version": "1.10",
+      "mod": false,
+      "note": "Early firmware. Missing the settings read-back, so an app can set values but not confirm them.",
+      "stm8": {
+        "file": "stm8-1.10.enc",
+        "bytes": 33088,
+        "sha256": "3f2984cb8ab03e5dc5ab4c8d29f8aab8943d417b51f647268d99649299773c45",
+        "expect": 110
+      },
+      "radio": {
+        "file": "radio-1.10.bin",
+        "bytes": 18270,
+        "sha256": "8a292424655118ccad408d19002acc7a45e69df9b74715b69a5fe843fd84256e",
+        "expect": "2.0"
+      }
+    },
+    {
+      "version": "1.20",
+      "mod": false,
+      "note": "The first version an app can read the stored settings back from, rather than only write them. Older than the comfort features most owners expect.",
+      "stm8": {
+        "file": "stm8-1.20.enc",
+        "bytes": 33088,
+        "sha256": "0454498ea3773d37e9f9465cdf9957cf9a2c933854b2d1f7b8d6ce96e90c9004",
+        "expect": 120
+      },
+      "radio": {
+        "file": "radio-1.20.bin",
+        "bytes": 18490,
+        "sha256": "e19530108037eb0751fa2572984f8bc12143e42965d6f2543a8734d508506fd7",
+        "expect": "3.2"
+      }
+    },
+    {
+      "version": "1.46",
+      "mod": false,
+      "note": "Adds the boost-length and boost-valve settings, and the automatic open-window detection. Close to 1.48 in day-to-day use.",
+      "stm8": {
+        "file": "stm8-1.46.enc",
+        "bytes": 34024,
+        "sha256": "bc7893a6f6f1c59c6699c2c3d4ad3e59fd14b94236cb5fc0ad9a0edca79371c3",
+        "expect": 146
+      },
+      "radio": {
+        "file": "radio-1.46.bin",
+        "bytes": 19120,
+        "sha256": "d64ecc51a2cb2311aca14f75df79f7e815bdcffd7c888d360c4edadf306c8e7d",
+        "expect": "4.4"
+      }
+    },
+    {
+      "version": "1.48",
+      "mod": false,
+      "note": "The last firmware eQ-3 shipped, and what a thermostat off the shelf runs. Pairing is mandatory here and there is no way to turn it off.",
+      "stm8": {
+        "file": "stm8-1.48.enc",
+        "bytes": 34024,
+        "sha256": "9df04911b4a06d5e4b439b7c4881dcb5f8113a4fdc0ba423191016229925c0b9",
+        "expect": 148
+      },
+      "radio": {
+        "file": "radio-1.48.bin",
+        "bytes": 19128,
+        "sha256": "de6a86eddd5cf37e288173e089112405a372465a5c63185985c8beffffea8008",
+        "expect": "4.6"
+      }
+    }
+  ],
+  "rescue_radio": {
+    "file": "rescue-radio.bin",
+    "bytes": 19128,
+    "sha256": "4fa90838ecc7253f9fac2a3f9ecbb4b7487cb38d0e9f86ffab9d1347a477fb88"
+  }
+}

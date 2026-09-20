@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    /* `vite-plugin-pwa/client` declares `virtual:pwa-register`, the service worker's registration
+       hook that `components/UpdatePrompt.tsx` imports. */
+    "types": ["vite/client", "web-bluetooth", "vite-plugin-pwa/client"],
+    "allowArbitraryExtensions": true,
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* The proven BThome decoder is plain JS with a passing fixture test and is imported as-is
+       (see src/device/bthome.d.ts). Rewriting it to gain types inside a module nothing else
+       reaches into would be risk for nothing. */
+    "allowJs": true,
+
+    /* No `baseUrl`: TypeScript 6 deprecates it and 7 removes it. `paths` resolves relative to this
+       file on its own, which is all the `@/` alias ever needed. Vite has the matching alias. */
+    "paths": { "@/*": ["./src/*"] },
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src"],
+  /* The tests are their own project (`tsconfig.test.json`) — they need Bun's globals and the app
+     must not have them. */
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
+}

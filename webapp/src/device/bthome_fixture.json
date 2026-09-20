@@ -1,0 +1,31 @@
+{
+ "key": "000102030405060708090a0b0c0d0e0f",
+ "mac": "001a2200ee60",
+ "synthetic": true,
+ "adverts": [
+  {
+   "raw": "41c2672b9bf73e46e1a4c912f201000013b86a2d",
+   "device_info": 65,
+   "plaintext": "02a80702a4060cd70c2f00",
+   "counter": 498
+  },
+  {
+   "raw": "41cb27fe09cdb9687ca1edf9010000fd2fd708",
+   "device_info": 65,
+   "plaintext": "2d001f010f0015000900",
+   "counter": 505
+  },
+  {
+   "raw": "4109a0a0d672349fecaa6f8300020000e361e96a",
+   "device_info": 65,
+   "plaintext": "02a80702a4060cd70c2f00",
+   "counter": 512
+  },
+  {
+   "raw": "419c2f4f9d67b5de63377b15020000bd76d763",
+   "device_info": 65,
+   "plaintext": "2d001f010f0015000900",
+   "counter": 533
+  }
+ ]
+}

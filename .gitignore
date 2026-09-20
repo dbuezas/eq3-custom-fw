@@ -1,0 +1,10 @@
+# THIS FOLDER IS PUBLISHED AS ITS OWN REPOSITORY, so it cannot rely on the ignore rules of the
+# repository it is developed in -- those stay behind. Anything that must never be committed needs a
+# rule HERE or in a .gitignore deeper inside this folder.
+#
+# Measured: `webapp/src/device/__pycache__/` and `webapp/tools/__pycache__/` were ignored only by
+# the parent repository's root .gitignore, so they were untracked here and committable there.
+__pycache__/
+*.pyc
+
+.DS_Store

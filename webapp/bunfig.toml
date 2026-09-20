@@ -1,0 +1,4 @@
+# `bun test` loads the app, which needs two things bun does not provide: a DOM, and the virtual
+# module Vite supplies for the service worker. `test-preload.ts` sets up both.
+[test]
+preload = ["./test-preload.ts"]

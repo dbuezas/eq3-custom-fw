@@ -1,0 +1,15 @@
+{
+  /* Tests get their own project so BUN'S GLOBALS STAY OUT OF THE APP. With `bun` in the app's
+     `types` a component could reach `Bun.file` and typecheck cleanly, then fail in a browser with
+     nothing having warned — the build would be the first to know. Same options otherwise. */
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["bun", "web-bluetooth", "vite-plugin-pwa/client"]
+  },
+  /* `virtual.d.ts` is here because a test that renders the app reaches the LCD artwork's virtual
+     module, and an ambient declaration only applies to the project that includes it. */
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/virtual.d.ts"],
+  /* `extends` would otherwise carry the app's exclude, which is exactly these files. */
+  "exclude": []
+}

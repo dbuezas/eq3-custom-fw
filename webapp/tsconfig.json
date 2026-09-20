@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.test.json" }
+  ],
+  /* `tsc` compiles nothing here — `files: []` makes this a solution file, and the app's own copy in
+     tsconfig.app.json is what typechecks the code. This copy exists for BUN'S RESOLVER, which reads
+     the tsconfig at the directory root and no other: without it `bun test` cannot resolve a single
+     `@/` import and every test that touches a component fails at import. Keep the three copies
+     identical — here, tsconfig.app.json, and vite.config.ts's alias. */
+  "compilerOptions": { "paths": { "@/*": ["./src/*"] } }
+}
