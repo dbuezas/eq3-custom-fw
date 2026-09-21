@@ -195,20 +195,35 @@ export const VERIFY_DROP_MEANS =
 /* ---- where the images are fetched from ---------------------------------------------------------- */
 
 /**
- * **ROOT-ABSOLUTE, AND THAT IS THE WHOLE POINT OF THESE EXISTING** `[manually verified]`.
+ * **ANCHORED TO THE DEPLOY ROOT, WHICH IS NOT THE HOST ROOT** `[manually verified]`.
  *
- * The app's URL is `/thermostat/<id>/install`, so a RELATIVE `firmware/…` resolves against it and
- * asks for `/thermostat/<id>/firmware/…`. **The dev server's SPA fallback answers that with
- * `index.html` and status 200** — so `response.ok` is TRUE and nothing looks wrong until the JSON
- * fails to parse, at which point the page reports that no firmware is staged on a deploy where seven
- * releases are. It is a 200 that means "not found", which is the shape a fetch cannot catch for you.
+ * Two different things can go wrong here and the fix has to survive both.
  *
- * They are functions in this module rather than strings in the component so the leading slash is one
- * decision with a test on it, instead of a character that has to be got right at each call.
+ * **A RELATIVE PATH RESOLVES AGAINST THE ROUTE.** The app's URL is `/thermostat/<id>/install`, so a
+ * relative `firmware/…` asks for `/thermostat/<id>/firmware/…`. The dev server's SPA fallback
+ * answers that with `index.html` and status 200 — so `response.ok` is TRUE and nothing looks wrong
+ * until the JSON fails to parse. It is a 200 that means "not found", which is the shape a fetch
+ * cannot catch for you.
+ *
+ * **AND A ROOT-ABSOLUTE PATH IS WRONG ON A PROJECT PAGE**, which is what this is deployed as. A
+ * leading `/firmware/` asks `dbuezas.github.io/firmware/…` — the USER page's root, a different site
+ * — and that 404s. Measured: the published app reported that it carried no firmware at all while
+ * seven releases sat one directory along, because the one place it looked was somebody else's.
+ *
+ * So: `import.meta.env.BASE_URL`, which Vite fills with whatever `base` the build used — `/` under
+ * `vite dev` and `/eq3-custom-fw/` in a Pages build. One value, set in one place
+ * (`vite.config.ts`'s `PAGES_BASE`), and neither hazard can come back.
+ *
+ * They are functions in this module rather than strings in the component so this is one decision
+ * with a test on it, instead of a path that has to be got right at each call.
  */
-const FIRMWARE_BASE = '/firmware/'
-export const catalogueUrl = () => `${FIRMWARE_BASE}catalogue.json`
-export const imageUrl = (file: string) => `${FIRMWARE_BASE}${file}`
+// `?? '/'` BECAUSE BASE_URL IS A VITE THING AND NOT EVERY RUNTIME SETS IT -- under `bun test` it is
+// undefined, and without the fallback every URL here became the string "undefinedfirmware/…". The
+// test below is what caught that, which is the argument for it driving this value rather than
+// asserting a constant.
+const firmwareBase = () => `${import.meta.env?.BASE_URL ?? '/'}firmware/`
+export const catalogueUrl = () => `${firmwareBase()}catalogue.json`
+export const imageUrl = (file: string) => `${firmwareBase()}${file}`
 
 /* ---- and what came back must be what the catalogue promised ----------------------------------- */
 

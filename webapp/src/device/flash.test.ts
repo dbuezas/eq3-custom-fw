@@ -126,7 +126,7 @@ test('A DOWNLOADED IMAGE IS HELD TO THE CATALOGUE, and an HTML page is not silen
   )
 })
 
-test('THE FIRMWARE URLS ARE ROOT-ABSOLUTE, because a relative one silently returns the app', () => {
+test('THE FIRMWARE URLS ARE ABSOLUTE, because a relative one silently returns the app', () => {
   // The app lives at /thermostat/<id>/install, so a relative `firmware/…` asks for
   // /thermostat/<id>/firmware/… -- which the SPA fallback answers with index.html and status 200.
   // response.ok is then true and the only symptom is JSON that will not parse, which the page
@@ -135,5 +135,23 @@ test('THE FIRMWARE URLS ARE ROOT-ABSOLUTE, because a relative one silently retur
   expect(imageUrl('stm8-2.00.enc').startsWith('/')).toBe(true)
   expect(catalogueUrl()).toBe('/firmware/catalogue.json')
   expect(imageUrl('radio-1.48.bin')).toBe('/firmware/radio-1.48.bin')
+})
+
+test('...AND ANCHORED TO THE DEPLOY BASE, because a project page is not at the host root', () => {
+  // THE TEST ABOVE PASSED WHILE THE PUBLISHED APP WAS BROKEN, which is the whole reason this one
+  // exists. Under `bun test` BASE_URL is `/`, so a hardcoded `/firmware/` satisfies every assertion
+  // up there -- and on GitHub Pages the app is served from /eq3-custom-fw/, where `/firmware/…` is
+  // the USER page's root, a different site, which 404s. The live app reported carrying no firmware
+  // at all while seven releases sat one directory along.
+  //
+  // So this drives the one input that differs between the two: the base Vite was built with.
+  const real = import.meta.env.BASE_URL
+  try {
+    import.meta.env.BASE_URL = '/eq3-custom-fw/'
+    expect(catalogueUrl()).toBe('/eq3-custom-fw/firmware/catalogue.json')
+    expect(imageUrl('stm8-2.00.enc')).toBe('/eq3-custom-fw/firmware/stm8-2.00.enc')
+  } finally {
+    import.meta.env.BASE_URL = real
+  }
 })
 
